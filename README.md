@@ -47,3 +47,13 @@ Whenever a user or application uploads a `.csv` file to the Source S3 Bucket, an
    id,first_name,last_name,role
    1,Jane,Doe,Admin
    2,John,Smith,User
+```
+3. Upload the file to the source bucket using the AWS CLI:
+```bash
+aws s3 cp users.csv s3://<source_bucket_name>/
+```
+4. Wait a few seconds, then list the contents of the destination bucket. You will find `users.json`:
+```bash
+aws s3 ls s3://<destination_bucket_name>/
+```
+5. `terraform destroy`
