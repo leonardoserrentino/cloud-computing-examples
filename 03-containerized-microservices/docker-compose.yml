@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  data-ingestion:
+    build: ./services/data-ingestion
+    ports:
+      - "5000:5000"
+    environment:
+      - ANALYTICS_SERVICE_URL=http://analytics:5001/analyze
+    networks:
+      - microservices-network
+    depends_on:
+      - analytics
+
+  analytics:
+    build: ./services/analytics
+    ports:
+      - "5001:5001"
+    networks:
+      - microservices-network
+
+networks:
+  microservices-network:
+    driver: bridge
