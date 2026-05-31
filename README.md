@@ -160,3 +160,36 @@ curl -X POST http://$MINIKUBE_IP:30050/ingest \
 ```bash
 kubectl delete namespace user
 ```
+
+---
+
+## Appendix A: Troubleshooting Connection Refused (`localhost:8080`)
+
+### The Problem
+When running `kubectl apply`, you might encounter the following error:
+> `Get "http://localhost:8080/openapi/v2?timeout=32s": dial tcp 127.0.0.1:8080: connect: connection refused`
+
+### The Architectural Context
+`kubectl` is simply a remote control client. It relies on a configuration file (usually located at `~/.kube/config`) to know where the Kubernetes Control Plane (API Server) lives. If your local cluster is turned off, or `kubectl` doesn't know where it is, it defaults to looking for it on `localhost:8080`. When nothing answers there, it throws this error.
+
+### The Runbook (Resolution Steps)
+
+**1. Start the Local Cluster**
+Ensure your local Kubernetes environment (like Minikube) is actually running.
+```bash
+minikube start
+```
+**2. Verify the Connection**
+Confirm that kubectl is now pointing to the correct, newly spun-up cluster IP rather than the default localhost port.
+```bash
+kubectl cluster-info
+```
+Expected Output: You should see the Kubernetes control plane running at an IP like `https://192.168.x.x:8443`.
+**Enable the Metrics Server (Required for HPA)**
+Because our architecture uses a Horizontal Pod Autoscaler, the cluster must be capable of tracking resource utilization. Enable the addon:
+```bash
+minikube addons enable metrics-server
+```
+```bash
+kubectl apply -f manifests/
+```
