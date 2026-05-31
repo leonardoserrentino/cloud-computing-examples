@@ -104,3 +104,59 @@ To cleanly stop the containers and dismantle the virtual network:
 ```bash
 docker compose down
 ```
+
+# ☸️ Project 04: Kubernetes Orchestration & Predictive Autoscaling
+
+## Architectural Overview
+This project upgrades our containerized microservices to an enterprise-grade orchestration platform using **Kubernetes**. It transitions from a static Docker Compose network to a highly available, declarative cluster architecture.
+
+Furthermore, this project outlines the design for a **Predictive Horizontal Pod Autoscaler (HPA)**. Instead of reacting retroactively to CPU spikes (which causes dropped packets during sudden traffic bursts), the architecture integrates a custom external metric (`predicted_requests_per_second_5m_ahead`). This allows Kubernetes to pre-warm and pre-scale pods based on mathematical forecasting models.
+
+## Key Concepts Demonstrated
+- **Kubernetes Primitives:** Deployments, Services (ClusterIP vs NodePort), and Namespaces.
+- **Native Service Discovery:** Cross-service communication relies on Kubernetes CoreDNS (e.g., `analytics-service.cloud-innovator.svc.cluster.local`), eliminating hardcoded IPs.
+- **Resource Limits & Requests:** Strict FinOps and stability controls at the container level to prevent "noisy neighbor" scenarios.
+- **Advanced Autoscaling:** Multi-metric HPA configuration with custom scaling behaviors (rapid scale-up, delayed scale-down stabilization windows).
+
+## Prerequisites for Local Testing
+To run this locally, you need a local Kubernetes cluster like **Minikube** or **Kind**.
+* Install `minikube` and `kubectl`.
+* Start the cluster: `minikube start`
+* Enable the metrics server: `minikube addons enable metrics-server`
+
+## Deployment Instructions
+1. First, point your terminal to Minikube's internal Docker daemon so it can find the images we built in Project 3:
+   ```bash
+   eval $(minikube docker-env)
+   ```
+2. Re-build the images from Project 3 directly inside the Minikube environment (navigate to the 03 folder to run this):
+   ```bash
+   docker build -t 03-containerized-microservices-data-ingestion:latest ./services/data-ingestion
+   docker build -t 03-containerized-microservices-analytics:latest ./services/analytics
+   ```
+3. Navigate back to this directory (04-kubernetes-autoscaling) and apply the manifests:
+   ```bash
+   kubectl apply -f manifests/
+   ```
+
+## Verification
+Check the status of your pods and the autoscaler:
+```bash
+kubectl get pods -n user
+kubectl get svc -n user
+kubectl get hpa -n user
+```
+```bash
+# Get the Minikube IP
+MINIKUBE_IP=$(minikube ip)
+
+# Send a payload
+curl -X POST http://$MINIKUBE_IP:30050/ingest \
+     -H "Content-Type: application/json" \
+     -d '{"sensor_id": "K8S-01", "value": 250}'
+```
+
+## Teardown
+```bash
+kubectl delete namespace cloud-innovator
+```
