@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytics-deployment
+  namespace: cloud-innovator
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: analytics
+  template:
+    metadata:
+      labels:
+        app: analytics
+    spec:
+      containers:
+      - name: analytics
+        # Note: In a real scenario, this image would be pulled from ECR/DockerHub
+        image: 03-containerized-microservices-analytics:latest
+        imagePullPolicy: Never # Forces Minikube to use the local Docker daemon image
+        ports:
+        - containerPort: 5001
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "250m"
+            memory: "256Mi"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: analytics-service
+  namespace: cloud-innovator
+spec:
+  type: ClusterIP # Internal traffic only
+  selector:
+    app: analytics
+  ports:
+    - protocol: TCP
+      port: 5001
+      targetPort: 5001
