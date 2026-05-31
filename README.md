@@ -158,5 +158,5 @@ curl -X POST http://$MINIKUBE_IP:30050/ingest \
 
 ## Teardown
 ```bash
-kubectl delete namespace cloud-innovator
+kubectl delete namespace user
 ```
