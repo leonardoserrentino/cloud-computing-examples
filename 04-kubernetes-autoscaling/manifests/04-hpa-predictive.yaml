@@ -1,0 +1,41 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: predictive-ingestion-hpa
+  namespace: user
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ingestion-deployment
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  # 1. Standard Fallback Metric (CPU)
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  # 2. Advanced Predictive Metric (Requires Prometheus Adapter in production)
+  - type: External
+    external:
+      metric:
+        name: predicted_requests_per_second_5m_ahead
+        selector:
+          matchLabels:
+            workload: ingestion-api
+      target:
+        type: Value
+        # If the ML model predicts more than 100 req/sec, scale up NOW, before it hits.
+        value: 100 
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 0 # Scale up immediately
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 300 # Wait 5 mins before scaling down to prevent thrashing
