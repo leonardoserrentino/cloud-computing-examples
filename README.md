@@ -57,3 +57,50 @@ aws s3 cp users.csv s3://<source_bucket_name>/
 aws s3 ls s3://<destination_bucket_name>/
 ```
 5. `terraform destroy`
+
+# 🐳 Project 03: Containerized Microservices & REST API Communication
+
+## Architectural Overview
+This project demonstrates the transition from monolithic software design to a **decoupled microservices architecture** using **Docker** and **Docker Compose**. 
+
+The system consists of two distinct microservices that communicate synchronously over HTTP REST APIs:
+1. **Data Ingestion Service:** Functions as the public-facing entry point. It absorbs external client JSON payloads and proxies them downstream via standard HTTP protocols.
+2. **Analytics Service:** Operates deep inside the private network boundary. It ingests the proxied data, applies computational thresholding formulas, and manages application state.
+
+## Key Concepts Demonstrated
+- **Multi-Stage Docker Builds:** Implements optimized, production-ready `Dockerfiles` separating the build compilation environment from the minimal runtime scratch space. This minimizes image sizing and cuts down security vulnerabilities.
+- **Service Discovery & Container Networking:** Leverages an isolated custom Docker bridge network. Services talk to each other utilizing internal DNS resolution names mapping back to Compose service blocks (`http://analytics:5001`), abstracting raw IP configurations.
+- **Architectural Isolation:** Independent dependency trees (`requirements.txt`), distinct build execution structures, and zero code coupling.
+
+## How to Deploy and Run
+1. Ensure Docker and Docker Compose are installed on your machine.
+2. Navigate to the project directory: `cd 03-containerized-microservices`
+3. Launch the containerized cluster in detached (background) mode:
+   ```bash
+   docker compose up --build -d
+   ```
+4. Verify that both containers are running properly:
+   ```bash
+   docker compose ps
+   ```
+## Verification & Testing Tasks
+1. Send a mock sensor data payload directly to the public Ingestion Service endpoint via `curl`:
+   ```bash
+   curl -X POST http://localhost:5000/ingest \
+     -H "Content-Type: application/json" \
+     -d '{"sensor_id": "SR-99", "value": 142}'
+   ```
+2. Check the logs to view data forwarding interactions across the virtual bridge:
+   ```bash
+   docker compose logs
+   ```
+3. Query the Analytics Service metrics endpoint to see the saved state and computational modifier results:
+   ```bash
+   curl http://localhost:5001/metrics
+   ```
+
+## Teardown
+To cleanly stop the containers and dismantle the virtual network:
+```bash
+docker compose down
+```
